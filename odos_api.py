@@ -2,7 +2,7 @@ import http.client
 from aiohttp import ClientSession
 from exections import GetQuoteError, AssembleError
 from w3_client import W3Client
-
+from colorama import Fore, Style
 
 class OdosAPI(W3Client):
     def __init__(self, *, session: ClientSession, private, base_url, quote_path, assemble_path, proxy, chain: dict):
@@ -38,7 +38,7 @@ class OdosAPI(W3Client):
 
             return content
 
-    async def __get_swap_data(self, *, amount: float, slippage: float, token_name_from, token_name_to) -> dict:
+    async def __get_quite(self, *, amount: float, slippage: float, token_name_from, token_name_to) -> dict:
         token_address_from = self._chain.get(token_name_from).get("contract")
         token_decimals_from = self._chain.get(token_name_from).get("decimals")
         token_address_to = self._chain.get(token_name_to).get("contract")
@@ -50,11 +50,11 @@ class OdosAPI(W3Client):
             "userAddr": self._address,
             "slippageLimitPercent": slippage,
             "inputTokens": [{
-                "tokenAddress": token_address_from,
+                "tokenAddress": self._w3.to_checksum_address(token_address_from),
                 "amount": str(self.to_wei(amount=amount, decimals=token_decimals_from))
             }],
             "outputTokens": [{
-                "tokenAddress": token_address_to,
+                "tokenAddress": self._w3.to_checksum_address(token_address_to),
                 "proportion": 1
             }]
         }
@@ -70,8 +70,8 @@ class OdosAPI(W3Client):
 
         return content
 
-    async def asemble(self, *, amount: float, slippage: float, token_name_from, token_name_to):
-        quite = await self.__get_swap_data(
+    async def __asemble(self, *, amount: float, slippage: float, token_name_from, token_name_to):
+        quite = await self.__get_quite(
             amount=amount,
             slippage=slippage,
             token_name_from=token_name_from,
@@ -90,8 +90,6 @@ class OdosAPI(W3Client):
             data=payload
         )
 
-        print(content)
-
         if "simulation" in content:
             simulation = content.get("simulation")
             is_success = simulation.get("isSuccess")
@@ -102,12 +100,25 @@ class OdosAPI(W3Client):
         if "transaction" not in content:
             raise AssembleError("Can`t find transaction info in response")
 
-        trx_data = content.get("transaction")
-        value = trx_data.get("value")
-        contract_to = trx_data.get("to")
-        call_data = trx_data.get("data")
-
         return content
 
-    async def make_transaction(self):
-        pass
+    async def swap(self, *, amount: float, slippage: float, token_name_from, token_name_to):
+        native_balance = await self._get_native_balance()
+
+        print(Fore.GREEN + f"Native token balance: {native_balance:.5f}")
+        print(Style.RESET_ALL)
+
+        assembled_transaction = await self.__asemble(
+            amount=amount,
+            slippage=slippage,
+            token_name_from=token_name_from,
+            token_name_to=token_name_to
+        )
+
+        transaction = assembled_transaction.get("transaction")
+        transaction["value"] = int(transaction["value"])
+
+        tx_hash = await self._send_transaction(transaction)
+        print(f"Transaction sent: {tx_hash.hex()}")
+
+        await self._wait_tx(hex_bytes=tx_hash)

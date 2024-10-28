@@ -38,12 +38,14 @@ async def main():
             chain=chains.get("scroll")
         )
 
-        content = await api.asemble(
-            amount=0.0001,
-            slippage=1,
-            token_name_from="eth",
+        tx_hash = await api.swap(
+            amount=0.1,
+            slippage=0.4,
+            token_name_from="usdt",
             token_name_to="usdc"
         )
+
+        print(tx_hash)
 
     except GetQuoteError as e:
         print(Fore.RED + f"Quote. {e}")
