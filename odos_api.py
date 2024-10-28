@@ -23,7 +23,8 @@ class OdosAPI(W3Client):
         async with self.__session.request(
             method=method,
             url=url,
-            json=data,
+            json=data if method != "GET" else None,
+            params=data if method == "GET" else None,
             timeout=10,
             allow_redirects=False,
             headers={
@@ -37,13 +38,13 @@ class OdosAPI(W3Client):
 
             return content
 
-    async def __get_quote(self, *, amount: float, slippage: float, token_name_from, token_name_to):
+    async def __get_swap_data(self, *, amount: float, slippage: float, token_name_from, token_name_to) -> dict:
         token_address_from = self._chain.get(token_name_from).get("contract")
         token_decimals_from = self._chain.get(token_name_from).get("decimals")
         token_address_to = self._chain.get(token_name_to).get("contract")
 
         payload = {
-            "chainId":  await self.w3.eth.chain_id,
+            "chainId":  await self._w3.eth.chain_id,
             "compact": True,
             #"gasPrice": await self.w3.eth.gas_price,
             "userAddr": self._address,
@@ -70,7 +71,7 @@ class OdosAPI(W3Client):
         return content
 
     async def asemble(self, *, amount: float, slippage: float, token_name_from, token_name_to):
-        quite = await self.__get_quote(
+        quite = await self.__get_swap_data(
             amount=amount,
             slippage=slippage,
             token_name_from=token_name_from,

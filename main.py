@@ -5,6 +5,7 @@ import json
 from dotenv import load_dotenv
 from aiohttp_socks import ProxyConnector
 from aiohttp import ClientSession, TCPConnector
+from colorama import Fore, Style
 
 from exections import GetQuoteError, AssembleError
 from odos_api import OdosAPI
@@ -38,22 +39,23 @@ async def main():
         )
 
         content = await api.asemble(
-            amount=0.1,
-            slippage=0.3,
-            token_name_from="usdt",
+            amount=0.0001,
+            slippage=1,
+            token_name_from="eth",
             token_name_to="usdc"
         )
 
     except GetQuoteError as e:
-        print(f"Quote. {e}")
+        print(Fore.RED + f"Quote. {e}")
     except AssembleError as e:
-        print(f"Assemble. {e}")
+        print(Fore.RED + f"Assemble. {e}")
     except Web3RPCError as e:
-        print(f"RPC error: {e}")
+        print(Fore.RED + f"RPC error: {e}")
     except Exception as e:
         _, _, exc_tb = sys.exc_info()
-        print(f"Something went wrong on line {exc_tb.tb_lineno} {e}")
+        print(Fore.RED + f"Something went wrong on line {exc_tb.tb_lineno} {e}")
     finally:
+        print(Style.RESET_ALL)
         await session.close()
 
 asyncio.run(main())
