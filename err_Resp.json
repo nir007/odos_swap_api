@@ -1,0 +1,41 @@
+{
+  "deprecated": "",
+  "blockNumber": 10596424,
+  "gasEstimate": 212960,
+  "gasEstimateValue": 0.02846857669776532,
+  "inputTokens": [
+    {
+      "tokenAddress": "0xf55bec9cafdbe8730f096aa55dad6d22d44099df",
+      "amount": "100000"
+    }
+  ],
+  "outputTokens": [
+    {
+      "tokenAddress": "0x06efdbff2a14a7c8e15944d1f4a48f9f95f663a4",
+      "amount": "99890"
+    }
+  ],
+  "netOutValue": 0.07154932235813405,
+  "outValues": [
+    "0.10001789905589938"
+  ],
+  "transaction": {
+    "gas": -1,
+    "gasPrice": 53729904,
+    "value": "0",
+    "to": "0xbFe03C9E20a9Fc0b37de01A172F207004935E0b1",
+    "from": "0x3dC64ACAA7d95054b43216EcAa95fC63f6cB6D40",
+    "data": "0x83bd37f90001f55bec9cafdbe8730f096aa55dad6d22d44099df000106efdbff2a14a7c8e15944d1f4a48f9f95f663a4030186a00301863200c49b0001716c55c2D9d9fc1e38465e9301db167Ba1483AB9000000013dC64ACAA7d95054b43216EcAa95fC63f6cB6D40000000000301020300060101010200ff000000000000000000000000000000000000000000887b414d34ba20ae7ed5378380682f22071d08c2f55bec9cafdbe8730f096aa55dad6d22d44099df000000000000000000000000000000000000000000000000",
+    "nonce": 66,
+    "chainId": 534352
+  },
+  "simulation": {
+    "isSuccess": false,
+    "amountsOut": [],
+    "gasEstimate": -1,
+    "simulationError": {
+      "type": "other",
+      "errorMessage": "execution reverted: ERC20 insufficient allowance 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001d45524332303a20696e73756666696369656e7420616c6c6f77616e6365000000)"
+    }
+  }
+}
