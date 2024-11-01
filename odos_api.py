@@ -38,7 +38,7 @@ class OdosAPI(W3Client):
 
             return content
 
-    async def __get_quite(self, *, amount: float, slippage: float, token_name_from, token_name_to) -> dict:
+    async def __get_swap_data(self, *, amount: float, slippage: float, token_name_from, token_name_to) -> dict:
         token_address_from = self._chain.get(token_name_from).get("contract")
         token_decimals_from = self._chain.get(token_name_from).get("decimals")
         token_address_to = self._chain.get(token_name_to).get("contract")
@@ -47,11 +47,11 @@ class OdosAPI(W3Client):
             "chainId":  await self._w3.eth.chain_id,
             "compact": True,
             #"gasPrice": await self.w3.eth.gas_price,
-            "userAddr": self._address,
+            "userAddr": self._account_address,
             "slippageLimitPercent": slippage,
             "inputTokens": [{
                 "tokenAddress": self._w3.to_checksum_address(token_address_from),
-                "amount": str(self.to_wei(amount=amount, decimals=token_decimals_from))
+                "amount": str(self._to_wei(amount=amount, decimals=token_decimals_from))
             }],
             "outputTokens": [{
                 "tokenAddress": self._w3.to_checksum_address(token_address_to),
@@ -70,18 +70,11 @@ class OdosAPI(W3Client):
 
         return content
 
-    async def __asemble(self, *, amount: float, slippage: float, token_name_from, token_name_to):
-        quite = await self.__get_quite(
-            amount=amount,
-            slippage=slippage,
-            token_name_from=token_name_from,
-            token_name_to=token_name_to,
-        )
-
+    async def __asemble(self, *, quite):
         payload = {
             "pathId":  quite.get("pathId"),
-            "simulate": True,
-            "userAddr": self._address
+            "simulate": False,
+            "userAddr": self._account_address
         }
 
         content = await self.__send_request(
@@ -90,7 +83,7 @@ class OdosAPI(W3Client):
             data=payload
         )
 
-        if "simulation" in content:
+        if "simulation" in content and content.get("simulation") is not None:
             simulation = content.get("simulation")
             is_success = simulation.get("isSuccess")
 
@@ -108,12 +101,21 @@ class OdosAPI(W3Client):
         print(Fore.GREEN + f"Native token balance: {native_balance:.5f}")
         print(Style.RESET_ALL)
 
-        assembled_transaction = await self.__asemble(
+        quite = await self.__get_swap_data(
             amount=amount,
             slippage=slippage,
             token_name_from=token_name_from,
-            token_name_to=token_name_to
+            token_name_to=token_name_to,
         )
+
+        if not self._is_native_token(token_name_from):
+            decimals = self._chain.get(token_name_from).get("decimals")
+            tx_hash = await self._approve(token_name_from, self._to_wei(amount=amount, decimals=decimals))
+            print(f"Approve transaction sent: {tx_hash.hex()}")
+
+            await self._wait_tx(hex_bytes=tx_hash)
+
+        assembled_transaction = await self.__asemble(quite=quite)
 
         transaction = assembled_transaction.get("transaction")
         transaction["value"] = int(transaction["value"])

@@ -2,77 +2,71 @@
   "arbitrum": {
     "rpc_url": "https://arbitrum.llamarpc.com",
     "explorer_url": "https://arbiscan.io/",
+    "abi": "arbitrum_abi.json",
+    "native_token": "eth",
     "eth": {
       "contract": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-      "decimals": 18,
-      "is_native": true
+      "decimals": 18
     },
      "usdt": {
       "contract": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-      "decimals": 6,
-       "is_native": false
+      "decimals": 6
     },
     "usdc": {
       "contract": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-      "decimals": 6,
-      "is_native": false
+      "decimals": 6
     }
   },
   "scroll": {
-    "rpc_url": "https://scroll-mainnet.public.blastapi.io",
+    "rpc_url": "https://scroll.drpc.org",
     "explorer_url": "https://scrollscan.com/",
+    "abi": "scroll_abi.json",
+    "native_token": "eth",
     "eth": {
       "contract": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-      "decimals": 18,
-      "is_native": true
+      "decimals": 18
     },
     "usdt": {
       "contract": "0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df",
-      "decimals": 6,
-      "is_native": false
+      "decimals": 6
     },
     "usdc": {
       "contract": "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4",
-      "decimals": 6,
-      "is_native": false
+      "decimals": 6
     }
   },
   "linea": {
     "rpc_url": "https://1rpc.io/linea",
     "explorer_url": "https://lineascan.build/",
+    "native_token": "eth",
     "eth": {
       "contract": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-      "decimals": 18,
-      "is_native": true
+      "decimals": 18
     },
     "usdt": {
       "contract": "0xA219439258ca9da29E9Cc4cE5596924745e12B93",
-      "decimals": 6,
-      "is_native": false
+      "decimals": 6
     },
     "usdc.e": {
       "contract": "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
-      "decimals": 6,
-      "is_native": false
+      "decimals": 6
     }
   },
   "polygon": {
     "rpc_url": "https://polygon.api.onfinality.io/public",
     "explorer_url": "https://polygonscan.com/",
-    "pol": {
+    "native_token": "matic",
+    "matic": {
       "contract": "0x0000000000000000000000000000000000001010",
-      "decimals": 18,
-      "is_native": true
+      "decimals": 18
     },
     "usdt": {
       "contract": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-      "decimals": 6,
-      "is_native": false
+      "decimals": 6
     },
     "usdc": {
       "contract": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-      "decimals": 6,
-      "is_native": false
+      "decimals": 6
     }
   }
 }
