@@ -39,10 +39,10 @@ async def main():
         )
 
         tx_hash = await api.swap(
-            amount=0.1,
+            amount=0.000001,
             slippage=0.4,
             token_name_from="usdt",
-            token_name_to="usdc"
+            token_name_to="eth"
         )
 
         print(tx_hash)
@@ -57,7 +57,6 @@ async def main():
         _, _, exc_tb = sys.exc_info()
         print(Fore.RED + f"Something went wrong on line {exc_tb.tb_lineno} {e}")
     finally:
-        print(Style.RESET_ALL)
         await session.close()
 
 asyncio.run(main())

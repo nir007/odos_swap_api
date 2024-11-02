@@ -2,7 +2,6 @@ import http.client
 from aiohttp import ClientSession
 from exections import GetQuoteError, AssembleError
 from w3_client import W3Client
-from colorama import Fore, Style
 
 class OdosAPI(W3Client):
     def __init__(self, *, session: ClientSession, private, base_url, quote_path, assemble_path, proxy, chain: dict):
@@ -38,7 +37,7 @@ class OdosAPI(W3Client):
 
             return content
 
-    async def __get_swap_data(self, *, amount: float, slippage: float, token_name_from, token_name_to) -> dict:
+    async def __get_quite(self, *, amount: float, slippage: float, token_name_from, token_name_to) -> dict:
         token_address_from = self._chain.get(token_name_from).get("contract")
         token_decimals_from = self._chain.get(token_name_from).get("decimals")
         token_address_to = self._chain.get(token_name_to).get("contract")
@@ -46,7 +45,6 @@ class OdosAPI(W3Client):
         payload = {
             "chainId":  await self._w3.eth.chain_id,
             "compact": True,
-            #"gasPrice": await self.w3.eth.gas_price,
             "userAddr": self._account_address,
             "slippageLimitPercent": slippage,
             "inputTokens": [{
@@ -70,7 +68,7 @@ class OdosAPI(W3Client):
 
         return content
 
-    async def __asemble(self, *, quite):
+    async def __asemble(self, *, quite: dict):
         payload = {
             "pathId":  quite.get("pathId"),
             "simulate": False,
@@ -95,13 +93,8 @@ class OdosAPI(W3Client):
 
         return content
 
-    async def swap(self, *, amount: float, slippage: float, token_name_from, token_name_to):
-        native_balance = await self._get_native_balance()
-
-        print(Fore.GREEN + f"Native token balance: {native_balance:.5f}")
-        print(Style.RESET_ALL)
-
-        quite = await self.__get_swap_data(
+    async def swap(self, *, amount: float, slippage: float, token_name_from: str, token_name_to: str):
+        quite = await self.__get_quite(
             amount=amount,
             slippage=slippage,
             token_name_from=token_name_from,
@@ -117,10 +110,14 @@ class OdosAPI(W3Client):
 
         assembled_transaction = await self.__asemble(quite=quite)
 
-        transaction = assembled_transaction.get("transaction")
+        transaction = assembled_transaction["transaction"]
         transaction["value"] = int(transaction["value"])
 
-        tx_hash = await self._send_transaction(transaction)
+        signed_transaction = await self._sign(transaction)
+
+        tx_hash = await self._w3.eth.send_raw_transaction(signed_transaction)
+
+        print(f"Swap: {amount:.10f} {token_name_from.upper()} to {token_name_to.upper()}")
         print(f"Transaction sent: {tx_hash.hex()}")
 
         await self._wait_tx(hex_bytes=tx_hash)

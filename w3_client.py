@@ -95,6 +95,10 @@ class W3Client:
     def _is_native_token(self, token_name: str) -> bool:
         return token_name.lower() == str(self._chain.get("native_token")).lower()
 
+    async def _sign(self, transaction: dict) -> HexBytes:
+        signed_transaction = self._w3.eth.account.sign_transaction(transaction, self._private)
+        return signed_transaction.raw_transaction
+
     async def _wait_tx(self, *, hex_bytes: HexBytes):
         total_time = 0
         timeout = 80
@@ -108,13 +112,13 @@ class W3Client:
                 receipts = await self._w3.eth.get_transaction_receipt(HexStr(tx_hash))
                 status = receipts.get("status")
                 if status == 1:
-                    print(Fore.GREEN + f"Transaction was successful: {self._chain.get("explorer_url")}tx/0x{hex_bytes.hex()}")
+                    print(Fore.GREEN + f"Transaction was successful: {self._chain.get('explorer_url')}tx/0x{hex_bytes.hex()}")
                     print(Style.RESET_ALL)
                     return True
                 elif status is None:
                     await asyncio.sleep(poll_latency)
                 else:
-                    print(Fore.RED + f"Transaction failed: {self._chain.get("explorer_url")}tx/0x{hex_bytes.hex()}")
+                    print(Fore.RED + f"Transaction failed: {self._chain.get('explorer_url')}tx/0x{hex_bytes.hex()}")
                     print(Style.RESET_ALL)
                     return False
             except TransactionNotFound:
