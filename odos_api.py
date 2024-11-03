@@ -1,7 +1,8 @@
 import http.client
 from aiohttp import ClientSession
-from exections import GetQuoteError, AssembleError
+from exceptions import GetQuoteError, AssembleError
 from w3_client import W3Client
+from loguru import logger
 
 class OdosClient(W3Client):
     def __init__(self, *, session: ClientSession, private, base_url, proxy, chain: dict):
@@ -15,7 +16,7 @@ class OdosClient(W3Client):
         self.__base_url = base_url
 
     async def __send_request(self, *, url: str, method: str = "GET", data: dict = None):
-        print(f"Sent request to {method}: {url}")
+        logger.info(f"Sent request to {method}: {url}")
 
         async with self.__session.request(
             method=method,
@@ -127,7 +128,7 @@ class OdosClient(W3Client):
                 self._to_wei(amount=amount, decimals=decimals)
             )
 
-            print(f"Approve transaction sent: {tx_hash.hex()}")
+            logger.info(f"Approve transaction sent: {tx_hash.hex()}")
 
             await self._wait_tx(hex_bytes=tx_hash)
 
@@ -140,7 +141,7 @@ class OdosClient(W3Client):
 
         tx_hash = await self._send_raw_transaction(signed_transaction)
 
-        print(f"Swap: {amount:.10f} {token_name_from.upper()} to {token_name_to.upper()}")
-        print(f"Transaction sent: {tx_hash.hex()}")
+        logger.info(f"Swap: {amount:.10f} {token_name_from.upper()} to {token_name_to.upper()}")
+        logger.info(f"Transaction sent: {tx_hash.hex()}")
 
         await self._wait_tx(hex_bytes=tx_hash)

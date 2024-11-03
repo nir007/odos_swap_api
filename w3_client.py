@@ -4,7 +4,7 @@ from web3 import AsyncWeb3, AsyncHTTPProvider
 from web3.types import HexBytes, HexStr, TxParams, Wei
 from web3.exceptions import TransactionNotFound
 from typing import cast
-from colorama import Fore, Style
+from loguru import logger
 
 class W3Client:
     def __init__(self, *, proxy, private, chain):
@@ -68,7 +68,7 @@ class W3Client:
             with open(self._chain.get("abi")) as file:
                 return json.load(file)
         except Exception as e:
-            raise RuntimeError(f"Can`t abi file {self._chain.get("abi")} {e}")
+            raise RuntimeError(f"Can`t find abi file {self._chain.get("abi")} {e}")
 
     async def _prepare_tx(self) -> TxParams:
         base_fee = await self.__w3.eth.gas_price
@@ -96,8 +96,7 @@ class W3Client:
             amount_in_wai
         ).build_transaction(await self._prepare_tx())
 
-        print(Fore.GREEN + f"Approving swap {token_name.upper()} for account {self._account_address}")
-        print(Style.RESET_ALL)
+        logger.info(f"Approving swap {token_name.upper()} for account {self._account_address}")
 
         return await self._send_transaction(transaction)
 
@@ -108,7 +107,7 @@ class W3Client:
         signed_transaction = self.__w3.eth.account.sign_transaction(transaction, self._private)
         return signed_transaction.raw_transaction
 
-    async def _wait_tx(self, *, hex_bytes: HexBytes):
+    async def _wait_tx(self, *, hex_bytes: HexBytes) -> bool:
         total_time = 0
         timeout = 80
         poll_latency = 10
@@ -116,24 +115,21 @@ class W3Client:
 
         while True:
             try:
-                print("Checking transaction status...")
+                logger.info("Checking transaction status...")
 
                 receipts = await self.__w3.eth.get_transaction_receipt(HexStr(tx_hash))
                 status = receipts.get("status")
                 if status == 1:
-                    print(Fore.GREEN + f"Transaction was successful: {self._chain.get('explorer_url')}tx/0x{hex_bytes.hex()}")
-                    print(Style.RESET_ALL)
+                    logger.success(f"Transaction was successful: {self._chain.get('explorer_url')}tx/0x{hex_bytes.hex()}")
                     return True
                 elif status is None:
                     await asyncio.sleep(poll_latency)
                 else:
-                    print(Fore.RED + f"Transaction failed: {self._chain.get('explorer_url')}tx/0x{hex_bytes.hex()}")
-                    print(Style.RESET_ALL)
+                    logger.error(f"Transaction failed: {self._chain.get('explorer_url')}tx/0x{hex_bytes.hex()}")
                     return False
             except TransactionNotFound:
                 if total_time > timeout:
-                    print(Fore.RED + f"Transaction isn`t in the chain after {timeout} seconds")
-                    print(Style.RESET_ALL)
+                    logger.error(f"Transaction isn`t in the chain after {timeout} seconds")
                     return False
                 total_time += poll_latency
                 await asyncio.sleep(poll_latency)

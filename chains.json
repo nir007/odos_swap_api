@@ -5,7 +5,7 @@
     "abi": "arbitrum_abi.json",
     "native_token": "eth",
     "tokens": {
-       "eth": {
+      "eth": {
       "contract": "0x0000000000000000000000000000000000000000",
       "decimals": 18
       },
@@ -15,6 +15,26 @@
       },
       "usdc": {
         "contract": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        "decimals": 6
+      }
+    }
+  },
+  "bsc": {
+    "rpc_url": "https://bsc-rpc.publicnode.com",
+    "explorer_url": "https://bscscan.com/",
+    "abi": "arbitrum_abi.json",
+    "native_token": "bnb",
+    "tokens": {
+      "bnb": {
+      "contract": "0x0000000000000000000000000000000000001000",
+      "decimals": 18
+      },
+      "usdt": {
+        "contract": "0x55d398326f99059fF775485246999027B3197955",
+        "decimals": 6
+      },
+      "usdc": {
+        "contract": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
         "decimals": 6
       }
     }
