@@ -1,12 +1,12 @@
 import asyncio
 from aiohttp_socks import ProxyConnector
 from aiohttp import ClientSession, TCPConnector
-from exceptions import GetQuoteError, AssembleError
+from exceptions import *
 from odos_api import OdosClient
 from web3.exceptions import Web3RPCError
 from helpers import *
 
-async def main():
+async def main(chain: dict, amount: float, slippage: float, token_from: str, token_to: str):
     proxy, private, base_url = get_start_up_settings()
 
     session = ClientSession(
@@ -14,8 +14,6 @@ async def main():
     )
 
     try:
-        chain, amount, slippage, token_from, token_to = get_user_input_params()
-
         api = OdosClient(
             session=session,
             base_url=base_url,
@@ -31,6 +29,8 @@ async def main():
             token_name_to=token_to
         )
 
+    except TokenNotFound as e:
+        logger.error(e)
     except GetQuoteError as e:
         logger.error(f"Quote: {e}")
     except AssembleError as e:
@@ -42,4 +42,5 @@ async def main():
     finally:
         await session.close()
 
-asyncio.run(main())
+chain, amount, slippage, token_from, token_to = get_user_input_params()
+asyncio.run(main(chain, amount, slippage, token_from, token_to))

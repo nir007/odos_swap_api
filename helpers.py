@@ -4,6 +4,7 @@ import questionary
 from loguru import logger
 from dotenv import load_dotenv
 
+CHAINS_FILE_NAME = "chains.json"
 README_URL = "https://github.com/nir007/odos_swap_api/blob/master/Readme.md"
 
 def is_number(val: str) -> bool:
@@ -29,40 +30,36 @@ def get_start_up_settings():
         logger.error(f"Invalid startup data: {e}")
 
 def get_user_input_params():
-    with open("chains.json", "r") as file:
+    with open(CHAINS_FILE_NAME, "r") as file:
         chains: dict = json.load(file)
 
-    chain_name = ""
-    while not chain_name in chains.keys():
-        chain_name = input(f"Enter chain name {list(chains.keys())}: ")
+    happy = questionary.confirm("Are you happy?").ask()
 
-    chain_tokens = dict(chains.get(chain_name).get("tokens")).keys()
+    logger.info("Great! Lets go" if happy else "Now we will make you happy")
 
-    token_from = ""
-    while not token_from in chain_tokens:
-        token_from = input(f"Enter token from {list(chain_tokens)}: ")
+    chain_name = questionary.select("Select chain: ", choices=list(chains.keys())).ask()
 
-    token_to = ""
-    while not token_to in chain_tokens or token_from == token_to:
-        token_to = input(f"Enter token to {list(chain_tokens)}: ")
+    chain_tokens = list(chains.get(chain_name).get("tokens"))
 
-        if token_from == token_to:
-            logger.warning("Choose different tokens for swapping please!")
+    token_from = questionary.select("Select token from: ", choices=chain_tokens).ask()
+
+    chain_tokens.remove(token_from)
+    token_to = questionary.select("Select token to: ", choices=chain_tokens).ask()
 
     amount = 0
     while not amount:
-        amount = input(f"Enter {token_from.upper()} amount: ")
+        amount = questionary.text(f"Enter {token_from.upper()} amount: ").ask()
 
-        if not is_number(amount):
+        if not is_number(amount) and amount != "0":
             logger.warning("Enter number please!")
             amount = 0
 
     slippage = 0
     while not slippage:
-        slippage = input(f"Enter swap slippage in percents: ")
+        slippage = questionary.text(f"Enter swap slippage in percents: ").ask()
 
         if not is_number(slippage):
             logger.warning("Enter number please!")
             slippage = 0
 
-    return chains.get("chain_name"), amount, slippage, token_from, token_to
+    return chains.get(chain_name), amount, slippage, token_from, token_to

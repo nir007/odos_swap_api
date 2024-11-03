@@ -1,6 +1,6 @@
 import http.client
 from aiohttp import ClientSession
-from exceptions import GetQuoteError, AssembleError
+from exceptions import *
 from w3_client import W3Client
 from loguru import logger
 
@@ -36,6 +36,40 @@ class OdosClient(W3Client):
 
             return content
 
+    async def __get_token_info(self, token_name: str) -> (str, int, bool):
+        chain_id = await self._get_cain_id()
+
+        path = f"/info/tokens/{chain_id}"
+
+        content = await self.__send_request(
+            method="GET",
+            url=f"{self.__base_url}{path}"
+        )
+
+        tokens: dict = content.get("tokenMap")
+
+        for addr in tokens.keys():
+            if str(tokens.get(addr).get("symbol")).lower() == token_name:
+                token_address = addr
+                token_decimal = int(tokens.get(addr).get("decimals"))
+                is_native = tokens.get(addr).get("protocolId") == "native"
+
+                return token_address, token_decimal, is_native
+
+        raise TokenNotFound(token_name)
+
+    async def __get_contract_info(self) -> (str, dict):
+        chain_id = await self._get_cain_id()
+
+        path = f"/info/contract-info/v2/{chain_id}"
+
+        content = await self.__send_request(
+            method="GET",
+            url=f"{self.__base_url}{path}"
+        )
+
+        return content.get("routerAddress"), content.get("erc20Abi").get("abi")
+
     async def __get_router_address(self) -> str:
         path = f"/info/router/v2/{await self._get_cain_id()}"
 
@@ -52,9 +86,8 @@ class OdosClient(W3Client):
     async def __get_quite(self, *, amount: float, slippage: float, token_name_from, token_name_to) -> dict:
         path = "/sor/quote/v2"
 
-        token_address_from = self._chain.get("tokens").get(token_name_from).get("contract")
-        token_decimals_from = self._chain.get("tokens").get(token_name_from).get("decimals")
-        token_address_to = self._chain.get("tokens").get(token_name_to).get("contract")
+        token_address_from, token_decimals_from, _ = await self.__get_token_info(token_name_from)
+        token_address_to, _, _ = await self.__get_token_info(token_name_to)
 
         payload = {
             "chainId":  await self._get_cain_id(),
@@ -117,20 +150,22 @@ class OdosClient(W3Client):
             token_name_to=token_name_to,
         )
 
-        if not self._is_native_token(token_name_from):
-            decimals = self._chain.get("tokens").get(token_name_from).get("decimals")
+        token_address, token_decimals, is_native = await self.__get_token_info(token_name_from)
 
-            router_address = await self.__get_router_address()
+        if not is_native:
+            router_address, abi = await self.__get_contract_info()
 
             tx_hash = await self._approve(
-                token_name_from,
-                router_address,
-                self._to_wei(amount=amount, decimals=decimals)
+                abi=abi,
+                token_address=token_address,
+                router_address=router_address,
+                amount_in_wai=self._to_wei(amount=amount, decimals=token_decimals)
             )
 
+            logger.info(f"Approving swap {amount} {token_name_from.upper()}")
             logger.info(f"Approve transaction sent: {tx_hash.hex()}")
 
-            await self._wait_tx(hex_bytes=tx_hash)
+            await self._wait_tx_2(hex_bytes=tx_hash)
 
         assembled_transaction = await self.__asemble(quite=quite)
 
@@ -141,7 +176,7 @@ class OdosClient(W3Client):
 
         tx_hash = await self._send_raw_transaction(signed_transaction)
 
-        logger.info(f"Swap: {amount:.10f} {token_name_from.upper()} to {token_name_to.upper()}")
+        logger.info(f"Swap: {amount:.7f} {token_name_from.upper()} to {token_name_to.upper()}")
         logger.info(f"Transaction sent: {tx_hash.hex()}")
 
-        await self._wait_tx(hex_bytes=tx_hash)
+        await self._wait_tx_2(hex_bytes=tx_hash)
